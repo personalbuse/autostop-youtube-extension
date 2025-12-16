@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "WhatsApp Audio Sync",
-  "version": "0.6",
+  "version": "0.7",
   "description": "Pausa YouTube cuando se reproduce un audio en WhatsApp Web y lo reanuda al finalizar.",
   "permissions": ["tabs", "scripting"],
   "host_permissions": [

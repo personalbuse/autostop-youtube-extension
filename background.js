@@ -1,38 +1,41 @@
 let youtubeTabId = null;
 let pausedByExtension = false;
+let audioTimeout = null;
+const AUDIO_DELAY = 2000; // 2 segundos
 
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-  if (tab.url && tab.url.includes("youtube.com/watch")) {
+  if (tab.url && tab.url.includes("youtube.com")) {
     youtubeTabId = tabId;
   }
 
   if (changeInfo.audible !== undefined) {
-    evaluateAudioState();
+    handleAudioChange();
   }
 });
 
 chrome.tabs.onRemoved.addListener(() => {
-  evaluateAudioState();
+  handleAudioChange();
 });
 
-function evaluateAudioState() {
+function handleAudioChange() {
   chrome.tabs.query({}, (tabs) => {
-    let externalAudioPlaying = false;
+    const externalAudioTabs = tabs.filter(tab =>
+      tab.audible &&
+      tab.url &&
+      !tab.url.includes("youtube.com")
+    );
 
-    for (const tab of tabs) {
-      if (
-        tab.audible &&
-        tab.url &&
-        !tab.url.includes("youtube.com")
-      ) {
-        externalAudioPlaying = true;
-        break;
+    if (externalAudioTabs.length > 0) {
+      // Audio externo detectado → aplicar delay
+      if (!audioTimeout) {
+        audioTimeout = setTimeout(() => {
+          pauseYouTube();
+        }, AUDIO_DELAY);
       }
-    }
-
-    if (externalAudioPlaying) {
-      pauseYouTube();
     } else {
+      // No hay audio externo
+      clearTimeout(audioTimeout);
+      audioTimeout = null;
       resumeYouTube();
     }
   });
