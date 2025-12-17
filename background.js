@@ -1,7 +1,7 @@
 let youtubeTabId = null;
 let pausedByExtension = false;
-let audioTimeout = null;
-const AUDIO_DELAY = 2000; // 2 segundos
+let audioTimer = null;
+const AUDIO_DELAY = 1500; // más corto y reactivo
 
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   if (tab.url && tab.url.includes("youtube.com")) {
@@ -9,35 +9,47 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   }
 
   if (changeInfo.audible !== undefined) {
-    handleAudioChange();
+    onAudioStateChange();
   }
 });
 
-chrome.tabs.onRemoved.addListener(() => {
-  handleAudioChange();
-});
+chrome.tabs.onRemoved.addListener(onAudioStateChange);
 
-function handleAudioChange() {
+function onAudioStateChange() {
   chrome.tabs.query({}, (tabs) => {
-    const externalAudioTabs = tabs.filter(tab =>
+    const hasExternalAudio = tabs.some(tab =>
       tab.audible &&
       tab.url &&
       !tab.url.includes("youtube.com")
     );
 
-    if (externalAudioTabs.length > 0) {
-      // Audio externo detectado → aplicar delay
-      if (!audioTimeout) {
-        audioTimeout = setTimeout(() => {
-          pauseYouTube();
+    if (hasExternalAudio) {
+      if (!audioTimer) {
+        audioTimer = setTimeout(() => {
+          confirmAndPause();
         }, AUDIO_DELAY);
       }
     } else {
-      // No hay audio externo
-      clearTimeout(audioTimeout);
-      audioTimeout = null;
+      clearTimeout(audioTimer);
+      audioTimer = null;
       resumeYouTube();
     }
+  });
+}
+
+function confirmAndPause() {
+  chrome.tabs.query({}, (tabs) => {
+    const stillExternalAudio = tabs.some(tab =>
+      tab.audible &&
+      tab.url &&
+      !tab.url.includes("youtube.com")
+    );
+
+    if (stillExternalAudio) {
+      pauseYouTube();
+    }
+
+    audioTimer = null;
   });
 }
 
@@ -48,7 +60,7 @@ function pauseYouTube() {
     target: { tabId: youtubeTabId },
     func: () => {
       const video = document.querySelector("video");
-      if (video && !video.paused) {
+      if (video && !video.paused && !video.ended) {
         video.pause();
         window.__pausedByExtension = true;
       }

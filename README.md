@@ -12,11 +12,9 @@ Designed for Chromium-based browsers such as **Brave** and **Google Chrome**.
 - Automatically resumes YouTube when external audio stops
 - Does not interfere if the user pauses YouTube manually
 - Lightweight and no external dependencies
-- Works fully offline
+- 
 
----
-
-## Installation (Developer Mode)
+Installation (Developer Mode)
 
 1. Open your browser and go to:
 
@@ -29,3 +27,5 @@ brave://extensions
 3. "Load extension without packing"
 
 4. Select the repository folder and try it out
+
+Anny issue u found please post it on issues or try to fix it and PR will be reviewed
